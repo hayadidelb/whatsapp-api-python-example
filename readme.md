@@ -2,7 +2,7 @@
 
 > A simple python bot for Maytapi WhatsApp Api
 
-[Our Website](https://maytapi.com/) • [WhatsApp Api Documentations](https://maytapi.com/whatsapp-api-documentation)
+[Our Website](https://maytapi.com/) • [WhatsApp Api Documentations](https://maytapi.com/whatsapp-api-documentation) • [WhatsApp Api Postman Collection](https://maytapi.com/whatsapp-postman-documentation)
 
 - In this example we echo the text messages back to user.
 - We use ngrok to create temporary https reverse proxy so whatsapp can reach our demo api.
@@ -43,3 +43,16 @@ flask run --host 0.0.0.0 --port 9000 --no-debugger --no-reload
 $env:FLASK_APP = "app.py"
 flask run --host 0.0.0.0 --port 9000 --no-debugger --no-reload
 ```
+
+You can test this bot with these preconfigured messages:
+
+- media
+- media64
+- location
+- reply
+- link
+- filepdf
+- filedoc
+- vcard
+- contact
+- product
