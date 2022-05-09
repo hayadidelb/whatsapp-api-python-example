@@ -6,6 +6,13 @@ import requests
 import sys
 import base64
 import json
+import csv
+import pprint
+import validators
+import urlexpander
+import time
+from hayadid_common import *
+
 
 app = Flask(__name__)
 
@@ -14,6 +21,16 @@ INSTANCE_URL = "https://api.maytapi.com/api"
 PRODUCT_ID = ""
 PHONE_ID = ""
 API_TOKEN = ""
+
+MAYTAPI_CREDENTIALS_FILE = "C:/Hayadid/licenses/maytapi_credentials_.csv"
+with open(MAYTAPI_CREDENTIALS_FILE,"r") as input:
+    next(input)
+    reader = csv.reader(input)
+    for line in reader:
+        PRODUCT_ID = line[0]
+        API_TOKEN = line[1]
+        PHONE_ID = line[2]
+
 
 
 @app.route("/")
@@ -50,23 +67,59 @@ def send_response(body):
     print("Response", response.json(), file=sys.stdout, flush=True)
     return
 
+# clear the log file
+f = open("mayapi.log", "w")
+f.close()
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
+
     json_data = request.get_json()
+    f = open("mayapi.log", "a")
 
     wttype = json_data["type"]
+    f.write(f"\n\n------------ Start json_data--wttype={wttype}-------------\n")
+    str = pprint.pformat(json_data)
+    f.write(f"{str}")
+    f.write(f"\n------------ End json_data---------------\n\n")
     if wttype == "message":
         message = json_data["message"]
         conversation = json_data["conversation"]
         _type = message["type"]
         if message["fromMe"]:
             return
+        sender_name = json_data.get("user").get("name")
+        sender_phone = json_data.get("user").get("phone")
+
         if _type == "text":
             # Handle Messages
             text = message["text"]
             text = text.lower()
-            if text == "media":
+            if text == "שלום":
+                rpyto = json_data["message"]["_serialized"]
+                body = {
+                    "type": "text",
+                    "message": f"שלום גם לך {sender_name} {sender_phone}",
+                    "reply_to": rpyto
+                }
+
+            # by sending url, the bot expands them
+            elif validators.url(text) is True:
+                rpyto = json_data["message"]["_serialized"]
+                orig_url = text
+                expanded_url=url_expand(orig_url)
+                if orig_url==expanded_url:
+                    message = f"url is not expanded"
+                else:
+                    message =  f"orig_url={orig_url}\nexpanded_url={expanded_url}\n",
+
+                body = {
+                    "type": "text",
+                    "message": message,
+                    "reply_to": rpyto
+                }
+
+            elif text == "media":
                 body = {
                     "type": "media",
                     "text": "Image Response",
