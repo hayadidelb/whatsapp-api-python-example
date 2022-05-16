@@ -32,5 +32,6 @@ pprint.pprint(response)
 
 response = client.detect_moderation_labels(Image={"Bytes" : source_bytes})
 #FIXME - need to seach for violence in response["ModerationLabels"][0]{"Name"} or response["ModerationLabels"][0]{"ParentName"}
+print("\n\n\n")
 pprint.pprint(response)
 

@@ -7,12 +7,6 @@ import sys
 import base64
 import json
 import csv
-import pprint
-import validators
-import urlexpander
-import time
-from hayadid_common import *
-
 
 app = Flask(__name__)
 
@@ -30,9 +24,6 @@ with open(MAYTAPI_CREDENTIALS_FILE,"r") as input:
         PRODUCT_ID = line[0]
         API_TOKEN = line[1]
         PHONE_ID = line[2]
-
-HAYADID_PHONE = "972502987607@c.us"
-RAVID_PHONE = "972543020221@c.us"
 
 
 @app.route("/")
@@ -69,77 +60,23 @@ def send_response(body):
     print("Response", response.json(), file=sys.stdout, flush=True)
     return
 
-# clear the log file
-f = open("mayapi.log", "w")
-f.close()
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
-    print("\nin webhook function", file=sys.stdout, flush=True)
     json_data = request.get_json()
 
-    f = open("mayapi.log", "a")
-
     wttype = json_data["type"]
-    f.write(f"\n\n------------ Start json_data--wttype={wttype}-------------\n")
-    str = pprint.pformat(json_data)
-    f.write(f"{str}")
-    f.write(f"\n------------ End json_data---------------\n\n")
     if wttype == "message":
         message = json_data["message"]
         conversation = json_data["conversation"]
         _type = message["type"]
-#        if message["fromMe"]:
-#            return
-        sender_name = json_data.get("user").get("name")
-        sender_phone = json_data.get("user").get("phone")
-        no_response = False
+        if message["fromMe"]:
+            return
         if _type == "text":
             # Handle Messages
             text = message["text"]
-            print(f"text={text}", file=sys.stdout, flush=True)
             text = text.lower()
-            if text == "1":
-                no_response = True
-                print("\nNO Response\n", file=sys.stdout,flush=True)
-            elif text=="2":
-                body = {"type": "text", "message": "Echo - " + text}
-                print("\nsending to sender\n", file=sys.stdout, flush=True)
-            elif text == "3":
-                body = {"type": "text", "message": "Echo - " + text}
-                body.update({"to_number": HAYADID_PHONE})
-                print("\nsending to hayadid\n", file=sys.stdout, flush=True)
-            elif text=="4":
-                body = {"type": "text", "message": "Echo - " + text}
-                body.update({"to_number": RAVID_PHONE})
-                print("\nsending to Ravid\n", file=sys.stdout, flush=True)
-
-
-            elif text == "שלום":
-                rpyto = json_data["message"]["_serialized"]
-                body = {
-                    "type": "text",
-                    "message": f"שלום גם לך {sender_name} {sender_phone}",
-                    "reply_to": rpyto
-                }
-
-            # by sending url, the bot expands them
-            elif validators.url(text) is True:
-                rpyto = json_data["message"]["_serialized"]
-                orig_url = text
-                expanded_url=url_expand(orig_url)
-                if orig_url==expanded_url:
-                    message = f"url is not expanded"
-                else:
-                    message =  f"orig_url={orig_url}\nexpanded_url={expanded_url}\n",
-
-                body = {
-                    "type": "text",
-                    "message": message,
-                    "reply_to": rpyto
-                }
-
-            elif text == "media":
+            if text == "media":
                 body = {
                     "type": "media",
                     "text": "Image Response",
@@ -212,10 +149,8 @@ def webhook():
                     }
             else:
                 body = {"type": "text", "message": "Echo - " + text}
-            if no_response==False:
-                if body.get("to_number")==None:
-                    body.update({"to_number": conversation})
-                send_response(body)
+            body.update({"to_number": conversation})
+            send_response(body)
     elif wttype == "status":
         stype =  json_data["type"]
         spid =  json_data["pid"]
@@ -232,7 +167,6 @@ def webhook():
               acmsgId["msgId"], " was ", acty["ackType"])
     else:
         print("Unknow Type:", wttype,  file=sys.stdout, flush=True)
-    print("end webhook function\n", file=sys.stdout, flush=True)
     return jsonify({"success": True}), 200
 
 
